@@ -242,3 +242,51 @@ export const joinWaitlist = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not join the waitlist. Please try again.");
     return { ok: true };
   });
+
+const pageSchema = z.object({ slug: z.string().min(1).max(120) });
+
+/** Public, read-only payload that powers the booking page. */
+export const getBookingPage = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => pageSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: business } = await supabaseAdmin
+      .from("businesses")
+      .select(
+        "id, name, slug, description, category, city, country, currency, timezone, phone, email, brand_color, logo_url, cover_url, is_published, is_suspended, cancellation_hours",
+      )
+      .eq("slug", data.slug)
+      .maybeSingle();
+
+    if (!business || !business.is_published || business.is_suspended) return null;
+
+    const [servicesRes, staffRes, staffServicesRes, locationsRes] = await Promise.all([
+      supabaseAdmin
+        .from("services")
+        .select("id, name, description, category, price, duration_minutes, location_id")
+        .eq("business_id", business.id)
+        .eq("is_active", true)
+        .order("name"),
+      supabaseAdmin
+        .from("staff")
+        .select("id, name, role, photo_url, bio")
+        .eq("business_id", business.id)
+        .eq("is_active", true)
+        .order("name"),
+      supabaseAdmin.from("staff_services").select("staff_id, service_id").eq("business_id", business.id),
+      supabaseAdmin
+        .from("locations")
+        .select("id, name, address, city")
+        .eq("business_id", business.id)
+        .eq("is_active", true),
+    ]);
+
+    return {
+      business,
+      services: servicesRes.data ?? [],
+      staff: staffRes.data ?? [],
+      staffServices: staffServicesRes.data ?? [],
+      locations: locationsRes.data ?? [],
+    };
+  });
