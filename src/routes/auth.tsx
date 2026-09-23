@@ -11,9 +11,8 @@ type Mode = "login" | "register";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>): { mode?: Mode } => ({
-    mode: search["mode"] === "register" ? "register" : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { mode?: Mode } =>
+    search["mode"] === "register" ? { mode: "register" } : {},
   head: () => ({
     meta: [
       { title: "Sign in or create your BookFlow account" },

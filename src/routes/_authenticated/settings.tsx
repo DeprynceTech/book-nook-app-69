@@ -82,7 +82,13 @@ function SettingsPage() {
   });
 
   const saveHour = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: { is_open?: boolean; open_time?: string; close_time?: string };
+    }) => {
       const { error } = await supabase.from("working_hours").update(patch).eq("id", id);
       if (error) throw error;
     },

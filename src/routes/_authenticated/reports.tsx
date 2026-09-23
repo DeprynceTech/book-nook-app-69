@@ -63,7 +63,10 @@ function ReportsPage() {
       }
 
       const byHour = new Array(24).fill(0) as number[];
-      for (const row of rows) byHour[new Date(row.starts_at).getHours()] += 1;
+      for (const row of rows) {
+        const hour = new Date(row.starts_at).getHours();
+        byHour[hour] = (byHour[hour] ?? 0) + 1;
+      }
       const peakHour = byHour.indexOf(Math.max(...byHour));
 
       return {
