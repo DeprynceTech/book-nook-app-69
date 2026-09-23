@@ -31,6 +31,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/staff'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as BookSlugRouteImport } from './routes/book/$slug'
+import { Route as ApiPublicBootstrapAdminRouteImport } from './routes/api/public/bootstrap-admin'
 import { Route as ApiPublicSendRemindersRouteImport } from './routes/api/public/send-reminders'
 
 const IndexRoute = IndexRouteImport.update({
@@ -143,6 +144,11 @@ const BookSlugRoute = BookSlugRouteImport.update({
   path: '/book/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBootstrapAdminRoute = ApiPublicBootstrapAdminRouteImport.update({
+  id: '/api/public/bootstrap-admin',
+  path: '/api/public/bootstrap-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSendRemindersRoute = ApiPublicSendRemindersRouteImport.update({
   id: '/api/public/send-reminders',
   path: '/api/public/send-reminders',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedStaffRoute
   '/support': typeof AuthenticatedSupportRoute
   '/book/$slug': typeof BookSlugRoute
+  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/api/public/send-reminders': typeof ApiPublicSendRemindersRoute
 }
 export interface FileRoutesByTo {
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedStaffRoute
   '/support': typeof AuthenticatedSupportRoute
   '/book/$slug': typeof BookSlugRoute
+  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/api/public/send-reminders': typeof ApiPublicSendRemindersRoute
 }
 export interface FileRoutesById {
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/book/$slug': typeof BookSlugRoute
+  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/api/public/send-reminders': typeof ApiPublicSendRemindersRoute
 }
 export interface FileRouteTypes {
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/book/$slug'
+    | '/api/public/bootstrap-admin'
     | '/api/public/send-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/book/$slug'
+    | '/api/public/bootstrap-admin'
     | '/api/public/send-reminders'
   id:
     | '__root__'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/_authenticated/staff'
     | '/_authenticated/support'
     | '/book/$slug'
+    | '/api/public/bootstrap-admin'
     | '/api/public/send-reminders'
   fileRoutesById: FileRoutesById
 }
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   BookSlugRoute: typeof BookSlugRoute
+  ApiPublicBootstrapAdminRoute: typeof ApiPublicBootstrapAdminRoute
   ApiPublicSendRemindersRoute: typeof ApiPublicSendRemindersRoute
 }
 
@@ -469,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bootstrap-admin': {
+      id: '/api/public/bootstrap-admin'
+      path: '/api/public/bootstrap-admin'
+      fullPath: '/api/public/bootstrap-admin'
+      preLoaderRoute: typeof ApiPublicBootstrapAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/send-reminders': {
       id: '/api/public/send-reminders'
       path: '/api/public/send-reminders'
@@ -523,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   BookSlugRoute: BookSlugRoute,
+  ApiPublicBootstrapAdminRoute: ApiPublicBootstrapAdminRoute,
   ApiPublicSendRemindersRoute: ApiPublicSendRemindersRoute,
 }
 export const routeTree = rootRouteImport
