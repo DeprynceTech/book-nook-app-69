@@ -5,6 +5,7 @@
 - [x] Auth, public booking page, business dashboard pages, platform admin
 - [x] Build passing + preview smoke test
 - [x] Reminder dispatcher endpoint (/api/public/send-reminders)
+- [x] Super admin account created and verified (admin view loads)
+- [x] Temporary bootstrap-admin route deleted
 - [ ] Schedule the reminder job (needs the app published)
-- [ ] Super admin account (waiting on user's credentials)
 - [ ] Replace placeholder contact details on /contact
