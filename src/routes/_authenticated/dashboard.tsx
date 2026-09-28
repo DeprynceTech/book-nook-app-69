@@ -28,10 +28,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function DashboardPage() {
   const { data: business, isLoading } = useBusiness();
   const navigate = useNavigate();
+  const { data: isAdmin, isLoading: adminLoading } = useIsSuperAdmin();
 
   useEffect(() => {
-    if (!isLoading && !business) void navigate({ to: "/onboarding", replace: true });
-  }, [isLoading, business, navigate]);
+    if (adminLoading || isLoading) return;
+    if (isAdmin) void navigate({ to: "/admin", replace: true });
+    else if (!business) void navigate({ to: "/onboarding", replace: true });
+  }, [isLoading, business, navigate, isAdmin, adminLoading]);
 
   const stats = useQuery({
     queryKey: ["dashboard", business?.id],
