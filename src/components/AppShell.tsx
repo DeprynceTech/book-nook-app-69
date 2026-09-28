@@ -12,11 +12,10 @@ import {
   Menu,
   Scissors,
   Settings,
-  Shield,
   Users,
   UserSquare2,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -39,8 +38,6 @@ const nav = [
 
 function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { data: isAdmin } = useIsSuperAdmin();
-
   return (
     <nav className="flex flex-col gap-1">
       {nav.map((item) => {
@@ -60,19 +57,6 @@ function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
           </Link>
         );
       })}
-      {isAdmin ? (
-        <Link
-          to="/admin"
-          onClick={onNavigate}
-          className={cn(
-            "mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-primary transition-colors hover:bg-sidebar-accent",
-            pathname === "/admin" && "bg-sidebar-accent",
-          )}
-        >
-          <Shield className="size-4" />
-          Super Admin
-        </Link>
-      ) : null}
     </nav>
   );
 }
@@ -141,6 +125,11 @@ export function AppShell({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: isAdmin } = useIsSuperAdmin();
+
+  useEffect(() => {
+    if (isAdmin) void navigate({ to: "/admin", replace: true });
+  }, [isAdmin, navigate]);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();

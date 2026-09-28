@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useBusiness } from "@/hooks/useBusiness";
+import { useBusiness, useIsSuperAdmin } from "@/hooks/useBusiness";
 import { formatCurrency, formatTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -28,10 +28,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function DashboardPage() {
   const { data: business, isLoading } = useBusiness();
   const navigate = useNavigate();
+  const { data: isAdmin, isLoading: adminLoading } = useIsSuperAdmin();
 
   useEffect(() => {
-    if (!isLoading && !business) void navigate({ to: "/onboarding", replace: true });
-  }, [isLoading, business, navigate]);
+    if (adminLoading || isLoading) return;
+    if (isAdmin) void navigate({ to: "/admin", replace: true });
+    else if (!business) void navigate({ to: "/onboarding", replace: true });
+  }, [isLoading, business, navigate, isAdmin, adminLoading]);
 
   const stats = useQuery({
     queryKey: ["dashboard", business?.id],
