@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useBusiness } from "@/hooks/useBusiness";
+import { useBusiness, useIsSuperAdmin } from "@/hooks/useBusiness";
 import { formatCurrency, formatTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
