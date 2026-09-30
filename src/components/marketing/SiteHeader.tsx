@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BrandMark } from "@/components/BrandMark";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 
@@ -20,9 +21,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary font-display text-sm font-bold text-primary-foreground">
-            BF
-          </span>
+          <BrandMark />
           <span className="font-display text-lg font-semibold">BookFlow</span>
         </Link>
 

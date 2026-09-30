@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { BrandMark } from "@/components/BrandMark";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -75,9 +76,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary font-display text-sm font-bold text-primary-foreground">
-            BF
-          </span>
+          <BrandMark />
           <span className="font-display text-lg font-semibold">BookFlow</span>
         </Link>
 

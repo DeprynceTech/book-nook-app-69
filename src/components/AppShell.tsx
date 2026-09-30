@@ -1,4 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { BrandMark } from "@/components/BrandMark";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
@@ -67,9 +68,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) 
   return (
     <div className="flex h-full flex-col gap-6 bg-sidebar p-4 text-sidebar-foreground">
       <Link to="/" className="flex items-center gap-2 px-1" onClick={onNavigate}>
-        <span className="grid size-9 place-items-center rounded-xl bg-sidebar-primary font-display text-sm font-bold text-sidebar-primary-foreground">
-          BF
-        </span>
+        <BrandMark />
         <span className="font-display text-lg font-semibold">BookFlow</span>
       </Link>
 

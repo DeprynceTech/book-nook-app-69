@@ -46,7 +46,7 @@ class LoggingProvider implements NotificationProvider {
 
   async send(message: NotificationMessage): Promise<SendResult> {
     console.info(`[notifications:${this.channel}] -> ${message.recipient}: ${message.body}`);
-    return { provider: this.name, status: "sent" };
+    return { provider: this.name, status: "skipped", error: "No delivery provider connected yet" };
   }
 }
 
