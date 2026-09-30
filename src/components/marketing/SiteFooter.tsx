@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BrandMark } from "@/components/BrandMark";
 
 export function SiteFooter() {
   return (
@@ -6,9 +7,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary font-display text-sm font-bold text-primary-foreground">
-              BF
-            </span>
+            <BrandMark />
             <span className="font-display text-lg font-semibold">BookFlow</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">

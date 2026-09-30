@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { BrandMark } from "@/components/BrandMark";
 import { useQueryClient } from "@tanstack/react-query";
 import { Building2, CreditCard, LayoutGrid, LifeBuoy, LogOut, Menu, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useState } from "react";
@@ -25,9 +26,7 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-6 bg-sidebar p-4 text-sidebar-foreground">
       <div className="flex items-center gap-2 px-1">
-        <span className="grid size-9 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
-          <ShieldCheck className="size-5" />
-        </span>
+        <BrandMark />
         <div>
           <p className="font-display text-base font-semibold leading-tight">BookFlow Control</p>
           <p className="text-xs text-sidebar-foreground/60">Platform administration</p>
