@@ -70,6 +70,53 @@ function StaffPage() {
     onError: () => toast.error("Could not update that team member."),
   });
 
+  const services = useQuery({
+    queryKey: ["services-min", business?.id],
+    enabled: Boolean(business?.id),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("services")
+        .select("id, name")
+        .eq("business_id", business!.id)
+        .eq("is_active", true)
+        .order("name");
+      return data ?? [];
+    },
+  });
+
+  const links = useQuery({
+    queryKey: ["staff-services", business?.id],
+    enabled: Boolean(business?.id),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("staff_services")
+        .select("id, staff_id, service_id")
+        .eq("business_id", business!.id);
+      return data ?? [];
+    },
+  });
+
+  const toggleService = useMutation({
+    mutationFn: async ({ staffId, serviceId, on }: { staffId: string; serviceId: string; on: boolean }) => {
+      if (on) {
+        const { error } = await supabase
+          .from("staff_services")
+          .insert({ business_id: business!.id, staff_id: staffId, service_id: serviceId });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("staff_services")
+          .delete()
+          .eq("staff_id", staffId)
+          .eq("service_id", serviceId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["staff-services"] }),
+    onError: () => toast.error("Could not update services for that team member."),
+  });
+
+
   return (
     <AppShell
       title="Team"
@@ -124,25 +171,60 @@ function StaffPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {staff.data?.map((member) => (
-            <div key={member.id} className="surface-panel flex items-center gap-3 p-4">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
-                {initials(member.name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{member.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {member.role ?? "Team member"}
-                  {member.phone ? ` · ${member.phone}` : ""}
-                </p>
+          {staff.data?.map((member) => {
+            const mine = new Set(
+              (links.data ?? []).filter((l) => l.staff_id === member.id).map((l) => l.service_id),
+            );
+            return (
+              <div key={member.id} className="surface-panel space-y-3 p-4">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
+                    {initials(member.name)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{member.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {member.role ?? "Team member"}
+                      {member.phone ? ` · ${member.phone}` : ""}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={member.is_active}
+                    onCheckedChange={(checked) => toggle.mutate({ id: member.id, isActive: checked })}
+                    aria-label="Accepting bookings"
+                  />
+                </div>
+                {(services.data?.length ?? 0) > 0 ? (
+                  <div>
+                    <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                      Services clients can book with {member.name.split(" ")[0]}
+                      {mine.size === 0 ? " (none picked = all services)" : ""}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {services.data?.map((s) => {
+                        const on = mine.has(s.id);
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            disabled={toggleService.isPending}
+                            onClick={() => toggleService.mutate({ staffId: member.id, serviceId: s.id, on: !on })}
+                            className={
+                              on
+                                ? "rounded-full border border-primary bg-primary/10 px-2.5 py-1 text-xs text-primary"
+                                : "rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
+                            }
+                          >
+                            {s.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-              <Switch
-                checked={member.is_active}
-                onCheckedChange={(checked) => toggle.mutate({ id: member.id, isActive: checked })}
-                aria-label="Accepting bookings"
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </AppShell>
