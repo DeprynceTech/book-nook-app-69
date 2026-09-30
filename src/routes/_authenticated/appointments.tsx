@@ -230,7 +230,7 @@ function AppointmentsPage() {
           <SelectContent>
             {statuses.map((s) => (
               <SelectItem key={s} value={s}>
-                {s === "all" ? "All statuses" : s.replace("_", " ")}
+                {s === "all" ? "All statuses" : s === "no_show" ? "Failed / no-show" : s}
               </SelectItem>
             ))}
           </SelectContent>
@@ -261,10 +261,15 @@ function AppointmentsPage() {
                 ) : null}
                 {appt.status === "confirmed" ? (
                   <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: appt.id, status: "completed" })}>
-                    Complete
+                    Mark done
                   </Button>
                 ) : null}
-                {appt.status !== "cancelled" && appt.status !== "completed" ? (
+                {appt.status === "pending" || appt.status === "confirmed" ? (
+                  <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: appt.id, status: "no_show" })}>
+                    Mark failed
+                  </Button>
+                ) : null}
+                {appt.status === "pending" || appt.status === "confirmed" ? (
                   <Button size="sm" variant="ghost" onClick={() => setStatus.mutate({ id: appt.id, status: "cancelled" })}>
                     Cancel
                   </Button>

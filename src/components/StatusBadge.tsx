@@ -6,7 +6,7 @@ const statusStyles: Record<string, string> = {
   completed: "bg-success/15 text-success",
   cancelled: "bg-destructive/12 text-destructive",
   rescheduled: "bg-accent/30 text-accent-foreground",
-  no_show: "bg-muted text-muted-foreground",
+  no_show: "bg-destructive/12 text-destructive",
   unpaid: "bg-muted text-muted-foreground",
   successful: "bg-success/15 text-success",
   failed: "bg-destructive/12 text-destructive",
@@ -26,7 +26,7 @@ export function StatusBadge({ status, className }: { status: string; className?:
         className,
       )}
     >
-      {status.replace("_", " ")}
+      {status === "no_show" ? "failed / no-show" : status.replace("_", " ")}
     </span>
   );
 }

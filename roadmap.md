@@ -9,3 +9,6 @@
 - [x] Temporary bootstrap-admin route deleted
 - [ ] Schedule the reminder job (needs the app published)
 - [ ] Replace placeholder contact details on /contact
+- [x] BookFlow logo, favicon and blue brand colors
+- [x] Mark appointments done / failed
+- [ ] Connect a real SMS/email sender so booking confirmations and reminders are delivered (needs sender domain / SMS account)
