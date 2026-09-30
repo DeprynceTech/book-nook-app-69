@@ -209,8 +209,9 @@ function BookingPage() {
 
         {serviceId ? (
           <section>
-            <h2 className="font-display text-lg font-semibold">2. Choose a team member</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <h2 className="font-display text-lg font-semibold">2. Choose your stylist or specialist</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Pick who you'd like to see, or let us match you with whoever is free first.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => {
@@ -218,11 +219,17 @@ function BookingPage() {
                   setSlot(null);
                 }}
                 className={cn(
-                  "rounded-full border border-border px-4 py-2 text-sm",
+                  "flex items-center gap-3 rounded-xl border border-border p-3 text-left",
                   staffId === null && "border-primary bg-primary/5",
                 )}
               >
-                First available
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
+                  ★
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">First available</span>
+                  <span className="block text-xs text-muted-foreground">Any team member</span>
+                </span>
               </button>
               {eligibleStaff.map((member) => (
                 <button
@@ -233,14 +240,30 @@ function BookingPage() {
                     setSlot(null);
                   }}
                   className={cn(
-                    "rounded-full border border-border px-4 py-2 text-sm",
+                    "flex items-center gap-3 rounded-xl border border-border p-3 text-left",
                     staffId === member.id && "border-primary bg-primary/5",
                   )}
                 >
-                  {member.name}
+                  {member.photo_url ? (
+                    <img src={member.photo_url} alt={member.name} className="size-11 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      {member.name
+                        .split(" ")
+                        .map((p) => p[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()}
+                    </span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">{member.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{member.role ?? "Team member"}</span>
+                  </span>
                 </button>
               ))}
             </div>
+
           </section>
         ) : null}
 
