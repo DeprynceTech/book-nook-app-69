@@ -182,6 +182,15 @@ export const createPublicBooking = createServerFn({ method: "POST" })
 
     if (apptError) throw new Error("Could not create the appointment. Please try again.");
 
+    const [staffResult, locationResult] = await Promise.all([
+      data.staffId
+        ? supabaseAdmin.from("staff").select("name").eq("id", data.staffId).eq("business_id", business.id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      service.location_id
+        ? supabaseAdmin.from("locations").select("name").eq("id", service.location_id).eq("business_id", business.id).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
     const { sendNotification, renderTemplate } = await import("@/lib/notifications.server");
     const vars = {
       customer: data.customerName,
@@ -223,6 +232,14 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       serviceName: service.name,
       price: service.price,
       currency: business.currency,
+      customerName: data.customerName.trim(),
+      customerPhone: phone,
+      customerEmail: data.customerEmail || null,
+      staffName: staffResult.data?.name ?? null,
+      locationName: locationResult.data?.name ?? null,
+      paymentStatus: "unpaid",
+      businessPhone: business.phone,
+      businessEmail: business.email,
     };
   });
 
@@ -282,8 +299,19 @@ export const getBookingPage = createServerFn({ method: "POST" })
         .eq("is_active", true),
     ]);
 
+    const resolveBrandingUrl = async (value: string | null) => {
+      if (!value || /^https?:\/\//.test(value)) return value;
+      const { data: signed } = await supabaseAdmin.storage.from("business-branding").createSignedUrl(value, 3600);
+      return signed?.signedUrl ?? null;
+    };
+
+    const [logoUrl, coverUrl] = await Promise.all([
+      resolveBrandingUrl(business.logo_url),
+      resolveBrandingUrl(business.cover_url),
+    ]);
+
     return {
-      business,
+      business: { ...business, logo_url: logoUrl, cover_url: coverUrl },
       services: servicesRes.data ?? [],
       staff: staffRes.data ?? [],
       staffServices: staffServicesRes.data ?? [],

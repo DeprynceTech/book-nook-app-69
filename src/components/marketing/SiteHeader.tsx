@@ -20,9 +20,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" aria-label="BookFlow home">
           <BrandMark />
-          <span className="font-display text-lg font-semibold">BookFlow</span>
         </Link>
 
         <nav className="ml-6 hidden items-center gap-6 md:flex">
@@ -63,7 +62,7 @@ export function SiteHeader() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
-            <SheetTitle className="font-display">BookFlow</SheetTitle>
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
             <div className="mt-6 flex flex-col gap-3">
               {links.map((link) => (
                 <Link

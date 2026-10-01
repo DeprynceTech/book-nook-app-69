@@ -11,4 +11,9 @@
 - [ ] Replace placeholder contact details on /contact
 - [x] BookFlow logo, favicon and blue brand colors
 - [x] Mark appointments done / failed
+- [x] Customer stylist/barber selection and staff-to-service assignments
+- [x] Business logo and booking cover uploads
+- [x] Redesigned branded public booking page
+- [x] Downloadable PDF booking receipt
+- [x] Navigation shows the logo without the BookFlow wordmark
 - [ ] Connect a real SMS/email sender so booking confirmations and reminders are delivered (needs sender domain / SMS account)
