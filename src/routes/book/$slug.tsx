@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, Clock, MapPin, Phone } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Download, MapPin, Phone, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getAvailability, createPublicBooking, getBookingPage } from "@/lib/booking.functions";
 import { formatCurrency, formatDate, formatTime, toDateKey } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { downloadBookingReceipt, type BookingReceipt } from "@/lib/booking-receipt";
 
 export const Route = createFileRoute("/book/$slug")({
   ssr: false,
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/book/$slug")({
       },
       { property: "og:title", content: "Book an appointment" },
       { property: "og:description", content: "Pick a service and time, and confirm your booking online." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: BookingPage,
@@ -54,7 +57,7 @@ function BookingPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
-  const [confirmed, setConfirmed] = useState<{ startsAt: string } | null>(null);
+  const [confirmed, setConfirmed] = useState<BookingReceipt | null>(null);
 
   const page = useQuery({
     queryKey: ["booking-page", slug],
@@ -94,8 +97,8 @@ function BookingPage() {
           notes: notes.trim(),
         },
       }),
-    onSuccess: () => {
-      setConfirmed({ startsAt: slot! });
+    onSuccess: (result) => {
+      setConfirmed(result);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Booking failed. Please try another time.");
@@ -124,39 +127,64 @@ function BookingPage() {
 
   if (confirmed) {
     return (
-      <div className="grid min-h-screen place-items-center bg-background px-4 py-12">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center">
-          <CheckCircle2 className="mx-auto size-12 text-success" />
-          <h1 className="mt-4 font-display text-2xl font-semibold">Booking requested</h1>
+      <div className="grid min-h-screen place-items-center bg-secondary/40 px-4 py-12">
+        <div className="w-full max-w-lg overflow-hidden rounded-lg border border-border bg-card shadow-elevated">
+          <div className="h-2 bg-primary" />
+          <div className="p-7 text-center sm:p-9">
+          <span className="mx-auto grid size-14 place-items-center rounded-full bg-success/10">
+            <CheckCircle2 className="size-8 text-success" />
+          </span>
+          <p className="mt-5 text-xs font-semibold uppercase text-primary">Booking reference #{confirmed.id.slice(0, 8).toUpperCase()}</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold">Your appointment is booked</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {business.name} will confirm shortly. We've saved your details.
+            Your details have been saved. Keep the receipt below for your records.
           </p>
-          <div className="mt-5 rounded-xl bg-secondary p-4 text-left text-sm">
-            <p className="font-medium">{service?.name}</p>
+          <div className="mt-6 rounded-lg bg-secondary p-5 text-left text-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold">{confirmed.serviceName}</p>
+                <p className="mt-1 text-muted-foreground">{business.name}</p>
+              </div>
+              <p className="font-semibold text-primary">{formatCurrency(confirmed.price, confirmed.currency)}</p>
+            </div>
             <p className="mt-1 text-muted-foreground">
               {formatDate(confirmed.startsAt)} at {formatTime(confirmed.startsAt)}
             </p>
-            {service ? (
-              <p className="mt-1 text-muted-foreground">
-                {service.duration_minutes} min · {formatCurrency(service.price, business.currency)}
-              </p>
-            ) : null}
+            {confirmed.staffName ? <p className="mt-1 text-muted-foreground">With {confirmed.staffName}</p> : null}
+            {confirmed.locationName ? <p className="mt-1 text-muted-foreground">{confirmed.locationName}</p> : null}
           </div>
+          <Button className="mt-5 w-full" size="lg" onClick={() => void downloadBookingReceipt(confirmed)}>
+            <Download className="size-4" /> Download PDF receipt
+          </Button>
           {business.phone ? (
             <p className="mt-4 text-xs text-muted-foreground">
               Need to change it? Call {business.phone}.
             </p>
           ) : null}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      <header className="border-b border-border bg-card/50">
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">{business.name}</h1>
+    <div className="min-h-screen bg-secondary/30 pb-16">
+      <header className="relative overflow-hidden border-b border-border bg-card">
+        {business.cover_url ? (
+          <img src={business.cover_url} alt="" className="absolute inset-0 size-full object-cover opacity-20" />
+        ) : null}
+        <div className="absolute inset-0 bg-background/70" />
+        <div className="relative mx-auto flex max-w-5xl items-center gap-4 px-4 py-8 sm:px-6 sm:py-10">
+          {business.logo_url ? (
+            <img src={business.logo_url} alt={`${business.name} logo`} className="size-16 rounded-lg border border-border bg-card object-contain p-1.5 shadow-sm sm:size-20" />
+          ) : (
+            <span className="grid size-16 place-items-center rounded-lg bg-primary text-xl font-bold text-primary-foreground sm:size-20">
+              {business.name.slice(0, 2).toUpperCase()}
+            </span>
+          )}
+          <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase text-primary">Online booking</p>
+          <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">{business.name}</h1>
           {business.description ? (
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">{business.description}</p>
           ) : null}
@@ -173,12 +201,15 @@ function BookingPage() {
               </span>
             ) : null}
           </div>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
-        <section>
-          <h2 className="font-display text-lg font-semibold">1. Choose a service</h2>
+      <main className="mx-auto grid max-w-5xl gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
+        <div className="space-y-6">
+        <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase text-primary">Step 1</p>
+          <h2 className="mt-1 font-display text-lg font-semibold">Choose a service</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {page.data.services.map((s) => (
               <button
@@ -190,7 +221,7 @@ function BookingPage() {
                   setSlot(null);
                 }}
                 className={cn(
-                  "rounded-xl border border-border p-4 text-left transition-colors hover:border-primary",
+                  "rounded-lg border border-border p-4 text-left transition-colors hover:border-primary",
                   serviceId === s.id && "border-primary bg-primary/5",
                 )}
               >
@@ -208,8 +239,9 @@ function BookingPage() {
         </section>
 
         {serviceId ? (
-          <section>
-            <h2 className="font-display text-lg font-semibold">2. Choose your stylist or specialist</h2>
+          <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase text-primary">Step 2</p>
+            <h2 className="mt-1 font-display text-lg font-semibold">Choose your stylist or barber</h2>
             <p className="mt-1 text-sm text-muted-foreground">Pick who you'd like to see, or let us match you with whoever is free first.</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <button
@@ -268,8 +300,9 @@ function BookingPage() {
         ) : null}
 
         {serviceId ? (
-          <section>
-            <h2 className="font-display text-lg font-semibold">3. Pick a date and time</h2>
+          <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase text-primary">Step 3</p>
+            <h2 className="mt-1 font-display text-lg font-semibold">Pick a date and time</h2>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
               {nextDays(14).map((d) => {
                 const key = toDateKey(d);
@@ -322,8 +355,9 @@ function BookingPage() {
         ) : null}
 
         {slot ? (
-          <section>
-            <h2 className="font-display text-lg font-semibold">4. Your details</h2>
+          <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase text-primary">Step 4</p>
+            <h2 className="mt-1 font-display text-lg font-semibold">Your details</h2>
             <form
               className="mt-3 space-y-4"
               onSubmit={(e) => {
@@ -367,6 +401,34 @@ function BookingPage() {
             </form>
           </section>
         ) : null}
+        </div>
+
+        <aside className="rounded-lg border border-border bg-card p-5 lg:sticky lg:top-6">
+          <p className="text-xs font-semibold uppercase text-primary">Your booking</p>
+          <h2 className="mt-1 font-display text-lg font-semibold">Appointment summary</h2>
+          {service ? (
+            <div className="mt-5 space-y-4 text-sm">
+              <div>
+                <p className="font-semibold">{service.name}</p>
+                <p className="mt-1 text-muted-foreground">{service.duration_minutes} min · {formatCurrency(service.price, business.currency)}</p>
+              </div>
+              <div className="flex gap-2 text-muted-foreground">
+                <UserRound className="mt-0.5 size-4 shrink-0" />
+                <span>{staffId ? eligibleStaff.find((member) => member.id === staffId)?.name : "First available"}</span>
+              </div>
+              {slot ? (
+                <div className="flex gap-2 text-muted-foreground">
+                  <CalendarDays className="mt-0.5 size-4 shrink-0" />
+                  <span>{formatDate(slot)} at {formatTime(slot)}</span>
+                </div>
+              ) : (
+                <p className="border-t border-border pt-4 text-xs text-muted-foreground">Choose a date and time to continue.</p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">Select a service to begin.</p>
+          )}
+        </aside>
       </main>
     </div>
   );

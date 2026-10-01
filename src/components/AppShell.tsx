@@ -67,9 +67,8 @@ function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) 
 
   return (
     <div className="flex h-full flex-col gap-6 bg-sidebar p-4 text-sidebar-foreground">
-      <Link to="/" className="flex items-center gap-2 px-1" onClick={onNavigate}>
+      <Link to="/" className="px-1" onClick={onNavigate} aria-label="BookFlow home">
         <BrandMark />
-        <span className="font-display text-lg font-semibold">BookFlow</span>
       </Link>
 
       {business ? (

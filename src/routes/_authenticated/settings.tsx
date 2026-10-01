@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ImagePlus, Upload } from "lucide-react";
+import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,57 @@ const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 function SettingsPage() {
   const { data: business } = useBusiness();
   const queryClient = useQueryClient();
+  const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
+
+  const branding = useQuery({
+    queryKey: ["business-branding", business?.id, business?.logo_url, business?.cover_url],
+    enabled: Boolean(business?.id),
+    queryFn: async () => {
+      const sign = async (value: string | null) => {
+        if (!value || /^https?:\/\//.test(value)) return value;
+        const { data } = await supabase.storage.from("business-branding").createSignedUrl(value, 3600);
+        return data?.signedUrl ?? null;
+      };
+      return {
+        logo: await sign(business?.logo_url ?? null),
+        cover: await sign(business?.cover_url ?? null),
+      };
+    },
+  });
+
+  async function uploadBranding(kind: "logo" | "cover", file?: File) {
+    if (!business || !file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose a PNG, JPG or WebP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5 MB.");
+      return;
+    }
+
+    setUploading(kind);
+    try {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${business.id}/${kind}.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from("business-branding")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+      const field = kind === "logo" ? "logo_url" : "cover_url";
+      const { error: updateError } = await supabase.from("businesses").update({ [field]: path }).eq("id", business.id);
+      if (updateError) throw updateError;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["current-business"] }),
+        queryClient.invalidateQueries({ queryKey: ["business-branding"] }),
+      ]);
+      toast.success(`${kind === "logo" ? "Logo" : "Cover image"} updated.`);
+    } catch {
+      toast.error("Could not upload that image.");
+    } finally {
+      setUploading(null);
+    }
+  }
 
   const hours = useQuery({
     queryKey: ["working-hours", business?.id],
@@ -176,6 +229,63 @@ function SettingsPage() {
         </form>
 
         <div className="space-y-6">
+          <div className="surface-panel p-4 sm:p-5">
+            <div className="flex items-start gap-3">
+              <ImagePlus className="mt-0.5 size-5 text-primary" />
+              <div>
+                <h2 className="font-display text-lg font-semibold">Booking page branding</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Add your logo and a wide cover image customers see when booking.</p>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-[9rem_1fr]">
+              <div>
+                <p className="mb-2 text-sm font-medium">Logo</p>
+                <div className="grid aspect-square place-items-center overflow-hidden rounded-lg border border-dashed border-border bg-secondary">
+                  {branding.data?.logo ? (
+                    <img src={branding.data.logo} alt="Business logo preview" className="size-full object-contain p-3" />
+                  ) : (
+                    <ImagePlus className="size-7 text-muted-foreground" />
+                  )}
+                </div>
+                <Button asChild variant="outline" size="sm" className="mt-2 w-full">
+                  <label>
+                    <Upload className="size-4" /> {uploading === "logo" ? "Uploading…" : "Upload logo"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      disabled={uploading !== null}
+                      onChange={(event) => void uploadBranding("logo", event.target.files?.[0])}
+                    />
+                  </label>
+                </Button>
+              </div>
+              <div>
+                <p className="mb-2 text-sm font-medium">Cover image</p>
+                <div className="grid aspect-[16/6] place-items-center overflow-hidden rounded-lg border border-dashed border-border bg-secondary">
+                  {branding.data?.cover ? (
+                    <img src={branding.data.cover} alt="Booking cover preview" className="size-full object-cover" />
+                  ) : (
+                    <ImagePlus className="size-7 text-muted-foreground" />
+                  )}
+                </div>
+                <Button asChild variant="outline" size="sm" className="mt-2">
+                  <label>
+                    <Upload className="size-4" /> {uploading === "cover" ? "Uploading…" : "Upload cover"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      disabled={uploading !== null}
+                      onChange={(event) => void uploadBranding("cover", event.target.files?.[0])}
+                    />
+                  </label>
+                </Button>
+                <p className="mt-2 text-xs text-muted-foreground">PNG, JPG or WebP. Up to 5 MB.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="surface-panel p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
