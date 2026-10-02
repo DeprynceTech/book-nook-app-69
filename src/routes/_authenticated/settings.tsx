@@ -69,7 +69,8 @@ function SettingsPage() {
         .upload(path, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
       const field = kind === "logo" ? "logo_url" : "cover_url";
-      const { error: updateError } = await supabase.from("businesses").update({ [field]: path }).eq("id", business.id);
+      const patch = field === "logo_url" ? { logo_url: path } : { cover_url: path };
+      const { error: updateError } = await supabase.from("businesses").update(patch).eq("id", business.id);
       if (updateError) throw updateError;
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["current-business"] }),
