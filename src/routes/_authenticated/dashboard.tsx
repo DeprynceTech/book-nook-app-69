@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { CalendarDays, CircleDollarSign, Users, ListChecks } from "lucide-react";
+import { CalendarDays, CircleDollarSign, Users, ListChecks, Wallet } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { PerformancePanel } from "@/components/PerformancePanel";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
@@ -72,10 +73,15 @@ function DashboardPage() {
         .filter((a) => a.status === "completed" || a.status === "confirmed")
         .reduce((sum, a) => sum + Number(a.price), 0);
 
+      const todayRevenue = (today.data ?? [])
+        .filter((a) => a.status === "completed" || a.status === "confirmed")
+        .reduce((sum, a) => sum + Number(a.price), 0);
+
       return {
         todayCount: today.data?.length ?? 0,
         pendingCount: (today.data ?? []).filter((a) => a.status === "pending").length,
         monthRevenue,
+        todayRevenue,
         customerCount: customers.count ?? 0,
         upcoming: upcoming.data ?? [],
       };
@@ -94,17 +100,24 @@ function DashboardPage() {
         ) : null
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <StatCard
+          label="Today's earnings"
+          value={formatCurrency(stats.data?.todayRevenue ?? 0, business?.currency ?? "UGX")}
+          icon={Wallet}
+          tone="success"
+        />
         <StatCard label="Today's appointments" value={stats.data?.todayCount ?? 0} icon={CalendarDays} tone="info" />
         <StatCard label="Awaiting confirmation" value={stats.data?.pendingCount ?? 0} icon={ListChecks} tone="warning" />
         <StatCard
           label="Revenue this month"
           value={formatCurrency(stats.data?.monthRevenue ?? 0, business?.currency ?? "UGX")}
           icon={CircleDollarSign}
-          tone="success"
         />
         <StatCard label="Customers" value={stats.data?.customerCount ?? 0} icon={Users} />
       </div>
+
+      {business ? <PerformancePanel businessId={business.id} currency={business.currency} /> : null}
 
       <div className="surface-panel mt-6 p-4 sm:p-5">
         <h2 className="font-display text-lg font-semibold">Upcoming appointments</h2>
