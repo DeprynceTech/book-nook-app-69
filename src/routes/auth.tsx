@@ -127,20 +127,39 @@ function AuthPage() {
                 autoComplete="email"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete={mode === "register" ? "new-password" : "current-password"}
-              />
-            </div>
+            {mode !== "forgot" ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {mode === "login" ? (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary hover:underline"
+                      onClick={() => setMode("forgot")}
+                    >
+                      Forgot password?
+                    </button>
+                  ) : null}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete={mode === "register" ? "new-password" : "current-password"}
+                />
+              </div>
+            ) : null}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
+              {busy
+                ? "Please wait…"
+                : mode === "register"
+                  ? "Create account"
+                  : mode === "forgot"
+                    ? "Send reset link"
+                    : "Sign in"}
             </Button>
           </form>
 
@@ -154,6 +173,18 @@ function AuthPage() {
               {mode === "register" ? "Sign in" : "Create one"}
             </button>
           </p>
+          {mode === "forgot" ? (
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Remembered it?{" "}
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline"
+                onClick={() => setMode("login")}
+              >
+                Back to sign in
+              </button>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
