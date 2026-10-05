@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "forgot";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -48,7 +48,14 @@ function AuthPage() {
     event.preventDefault();
     setBusy(true);
     try {
-      if (mode === "register") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Check your email for a password reset link.");
+        setMode("login");
+      } else if (mode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -82,12 +89,18 @@ function AuthPage() {
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <h1 className="font-display text-2xl font-semibold">
-            {mode === "register" ? "Create your workspace" : "Welcome back"}
+            {mode === "register"
+              ? "Create your workspace"
+              : mode === "forgot"
+                ? "Reset your password"
+                : "Welcome back"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "register"
               ? "Start your 14-day free trial. No card required."
-              : "Sign in to manage your bookings."}
+              : mode === "forgot"
+                ? "Enter your email and we'll send you a reset link."
+                : "Sign in to manage your bookings."}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -114,20 +127,39 @@ function AuthPage() {
                 autoComplete="email"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete={mode === "register" ? "new-password" : "current-password"}
-              />
-            </div>
+            {mode !== "forgot" ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {mode === "login" ? (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary hover:underline"
+                      onClick={() => setMode("forgot")}
+                    >
+                      Forgot password?
+                    </button>
+                  ) : null}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete={mode === "register" ? "new-password" : "current-password"}
+                />
+              </div>
+            ) : null}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
+              {busy
+                ? "Please wait…"
+                : mode === "register"
+                  ? "Create account"
+                  : mode === "forgot"
+                    ? "Send reset link"
+                    : "Sign in"}
             </Button>
           </form>
 
@@ -141,6 +173,18 @@ function AuthPage() {
               {mode === "register" ? "Sign in" : "Create one"}
             </button>
           </p>
+          {mode === "forgot" ? (
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Remembered it?{" "}
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline"
+                onClick={() => setMode("login")}
+              >
+                Back to sign in
+              </button>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
