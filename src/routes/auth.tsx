@@ -89,12 +89,18 @@ function AuthPage() {
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <h1 className="font-display text-2xl font-semibold">
-            {mode === "register" ? "Create your workspace" : "Welcome back"}
+            {mode === "register"
+              ? "Create your workspace"
+              : mode === "forgot"
+                ? "Reset your password"
+                : "Welcome back"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "register"
               ? "Start your 14-day free trial. No card required."
-              : "Sign in to manage your bookings."}
+              : mode === "forgot"
+                ? "Enter your email and we'll send you a reset link."
+                : "Sign in to manage your bookings."}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
