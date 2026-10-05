@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "forgot";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
