@@ -48,7 +48,14 @@ function AuthPage() {
     event.preventDefault();
     setBusy(true);
     try {
-      if (mode === "register") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Check your email for a password reset link.");
+        setMode("login");
+      } else if (mode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
