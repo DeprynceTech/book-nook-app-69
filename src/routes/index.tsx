@@ -53,7 +53,7 @@ function Landing() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link to="/auth" search={{ mode: "register" }}>
+                <Link to="/signup">
                   Start 14-day free trial
                 </Link>
               </Button>
@@ -96,7 +96,7 @@ function Landing() {
             Create your workspace, add your services and share your booking link today.
           </p>
           <Button asChild size="lg" className="mt-6">
-            <Link to="/auth" search={{ mode: "register" }}>
+            <Link to="/signup">
               Create your free account
             </Link>
           </Button>
