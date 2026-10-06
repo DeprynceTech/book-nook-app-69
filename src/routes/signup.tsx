@@ -136,7 +136,10 @@ function SignupPage() {
     setBusy(true);
     const { error } = await supabase.auth.resend({ type: "signup", email });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     startCooldown();
     toast.success("A new code is on its way.");
   }
