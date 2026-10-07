@@ -39,6 +39,10 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (mode === "register") void navigate({ to: "/signup", replace: true });
+  }, [mode, navigate]);
+
+  useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
       if (data.session) void navigate({ to: "/dashboard", replace: true });
     });

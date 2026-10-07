@@ -84,7 +84,7 @@ function PricingPage() {
                   ))}
                 </ul>
                 <Button asChild className="mt-6">
-                  <Link to="/auth" search={{ mode: "register" }}>
+                  <Link to="/signup">
                     Start free trial
                   </Link>
                 </Button>

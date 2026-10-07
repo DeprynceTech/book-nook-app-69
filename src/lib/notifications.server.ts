@@ -50,9 +50,43 @@ class LoggingProvider implements NotificationProvider {
   }
 }
 
+/** Twilio SMS via the connector gateway. Falls back to logging when not linked. */
+class TwilioSmsProvider implements NotificationProvider {
+  name = "twilio";
+  channel: Channel = "sms";
+  private fallback = new LoggingProvider("internal-sms", "sms");
+
+  async send(message: NotificationMessage): Promise<SendResult> {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const twilioKey = process.env.TWILIO_API_KEY;
+    const from = process.env.TWILIO_FROM_NUMBER;
+    if (!lovableKey || !twilioKey || !from) return this.fallback.send(message);
+
+    const to = message.recipient.replace(/[^\d+]/g, "");
+    if (!to.startsWith("+")) {
+      return { provider: this.name, status: "failed", error: "Phone must include country code (+...)" };
+    }
+    const res = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": twilioKey,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: message.body.slice(0, 1600) }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`Twilio send failed [${res.status}]: ${text}`);
+      return { provider: this.name, status: "failed", error: `[${res.status}] ${text.slice(0, 300)}` };
+    }
+    return { provider: this.name, status: "sent" };
+  }
+}
+
 const registry = new Map<Channel, NotificationProvider>([
   ["email", new LoggingProvider("internal-email", "email")],
-  ["sms", new LoggingProvider("internal-sms", "sms")],
+  ["sms", new TwilioSmsProvider()],
   ["whatsapp", new LoggingProvider("internal-whatsapp", "whatsapp")],
 ]);
 
