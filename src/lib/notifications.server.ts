@@ -72,13 +72,13 @@ class KlaviyoProvider implements NotificationProvider {
 
     const profile: Record<string, string> = {};
     if (message.channel === "email") {
-      profile.email = message.recipient.trim();
+      profile["email"] = message.recipient.trim();
     } else {
       const phone = message.recipient.replace(/[^\d+]/g, "");
       if (!phone.startsWith("+")) {
         return { provider: this.name, status: "failed", error: "Phone must include country code (+...)" };
       }
-      profile.phone_number = phone;
+      profile["phone_number"] = phone;
     }
 
     const res = await fetch("https://connector-gateway.lovable.dev/klaviyo/events/", {
