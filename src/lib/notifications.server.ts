@@ -50,34 +50,73 @@ class LoggingProvider implements NotificationProvider {
   }
 }
 
-/** Twilio SMS via the connector gateway. Falls back to logging when not linked. */
-class TwilioSmsProvider implements NotificationProvider {
-  name = "twilio";
-  channel: Channel = "sms";
-  private fallback = new LoggingProvider("internal-sms", "sms");
+/**
+ * Klaviyo via the connector gateway. Each message is recorded as a Klaviyo
+ * event (metric e.g. "BookFlow Email booking_confirmation"); a Klaviyo flow
+ * triggered by that metric performs the actual email/SMS delivery using the
+ * event properties (subject, body, business, ...).
+ */
+const METRIC_LABEL: Record<Channel, string> = { email: "Email", sms: "SMS", whatsapp: "WhatsApp" };
+
+class KlaviyoProvider implements NotificationProvider {
+  name = "klaviyo";
+  private fallback: LoggingProvider;
+  constructor(public channel: Channel) {
+    this.fallback = new LoggingProvider(`internal-${channel}`, channel);
+  }
 
   async send(message: NotificationMessage): Promise<SendResult> {
     const lovableKey = process.env["LOVABLE_API_KEY"];
-    const twilioKey = process.env["TWILIO_API_KEY"];
-    const from = process.env["TWILIO_FROM_NUMBER"];
-    if (!lovableKey || !twilioKey || !from) return this.fallback.send(message);
+    const klaviyoKey = process.env["KLAVIYO_API_KEY"];
+    if (!lovableKey || !klaviyoKey) return this.fallback.send(message);
 
-    const to = message.recipient.replace(/[^\d+]/g, "");
-    if (!to.startsWith("+")) {
-      return { provider: this.name, status: "failed", error: "Phone must include country code (+...)" };
+    const profile: Record<string, string> = {};
+    if (message.channel === "email") {
+      profile["email"] = message.recipient.trim();
+    } else {
+      const phone = message.recipient.replace(/[^\d+]/g, "");
+      if (!phone.startsWith("+")) {
+        return { provider: this.name, status: "failed", error: "Phone must include country code (+...)" };
+      }
+      profile["phone_number"] = phone;
     }
-    const res = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
+
+    const res = await fetch("https://connector-gateway.lovable.dev/klaviyo/events/", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": twilioKey,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Connection-Api-Key": klaviyoKey,
+        revision: "2026-07-15",
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
       },
-      body: new URLSearchParams({ To: to, From: from, Body: message.body.slice(0, 1600) }),
+      body: JSON.stringify({
+        data: {
+          type: "event",
+          attributes: {
+            properties: {
+              subject: message.subject ?? "",
+              body: message.body,
+              notification_type: message.type,
+              channel: message.channel,
+              business_id: message.businessId,
+              appointment_id: message.appointmentId ?? null,
+            },
+            metric: {
+              data: {
+                type: "metric",
+                attributes: { name: `BookFlow ${METRIC_LABEL[message.channel]} ${message.type}` },
+              },
+            },
+            profile: { data: { type: "profile", attributes: profile } },
+            unique_id: `${message.appointmentId ?? crypto.randomUUID()}-${message.type}-${message.channel}`,
+          },
+        },
+      }),
     });
     if (!res.ok) {
       const text = await res.text();
-      console.error(`Twilio send failed [${res.status}]: ${text}`);
+      console.error(`Klaviyo send failed [${res.status}]: ${text}`);
       return { provider: this.name, status: "failed", error: `[${res.status}] ${text.slice(0, 300)}` };
     }
     return { provider: this.name, status: "sent" };
@@ -85,8 +124,8 @@ class TwilioSmsProvider implements NotificationProvider {
 }
 
 const registry = new Map<Channel, NotificationProvider>([
-  ["email", new LoggingProvider("internal-email", "email")],
-  ["sms", new TwilioSmsProvider()],
+  ["email", new KlaviyoProvider("email")],
+  ["sms", new KlaviyoProvider("sms")],
   ["whatsapp", new LoggingProvider("internal-whatsapp", "whatsapp")],
 ]);
 
