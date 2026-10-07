@@ -57,9 +57,9 @@ class TwilioSmsProvider implements NotificationProvider {
   private fallback = new LoggingProvider("internal-sms", "sms");
 
   async send(message: NotificationMessage): Promise<SendResult> {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const twilioKey = process.env.TWILIO_API_KEY;
-    const from = process.env.TWILIO_FROM_NUMBER;
+    const lovableKey = process.env["LOVABLE_API_KEY"];
+    const twilioKey = process.env["TWILIO_API_KEY"];
+    const from = process.env["TWILIO_FROM_NUMBER"];
     if (!lovableKey || !twilioKey || !from) return this.fallback.send(message);
 
     const to = message.recipient.replace(/[^\d+]/g, "");
