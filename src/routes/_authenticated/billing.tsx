@@ -94,7 +94,7 @@ function BillingPage() {
             <div key={plan.id} className="surface-panel flex flex-col p-4">
               <p className="font-display text-lg font-semibold">{plan.name}</p>
               <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
-              <p className="mt-3 font-display text-2xl font-semibold">
+              <p className="mt-3 font-display text-xl font-semibold">
                 {Number(plan.price_monthly) === 0 ? "Free" : formatCurrency(plan.price_monthly, plan.currency)}
               </p>
               <ul className="mt-3 flex-1 space-y-1.5 text-xs text-muted-foreground">
