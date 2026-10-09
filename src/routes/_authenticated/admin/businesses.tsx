@@ -51,7 +51,7 @@ function Businesses() {
   });
 
   const unlock = useMutation({
-    mutationFn: async ({ businessId, planId, subId }: { businessId: string; planId: string; subId?: string }) => {
+    mutationFn: async ({ businessId, planId, subId }: { businessId: string; planId: string; subId?: string | undefined }) => {
       const plan = data?.plans.find((p) => p.id === planId);
       if (!plan) throw new Error("Pick a plan");
       const start = new Date();
