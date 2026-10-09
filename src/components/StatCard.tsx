@@ -24,7 +24,7 @@ export function StatCard({ label, value, hint, icon: Icon, tone = "default" }: S
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-          <p className="mt-2 font-display text-2xl font-semibold sm:text-3xl">{value}</p>
+          <p className="mt-2 break-words font-display text-lg font-semibold leading-tight sm:text-xl">{value}</p>
           {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
         </div>
         {Icon ? (
