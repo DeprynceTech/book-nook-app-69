@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/format";
+import { CurrencySelect, useDisplayCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "Transparent BookFlow pricing. Start with a 14-day free trial, then choose a plan that matches your team size, locations and reminder channels.",
+          "Transparent BookFlow pricing. Start with a 7-day free trial, then choose a plan that matches your team size, locations and reminder channels.",
       },
       { property: "og:title", content: "BookFlow pricing" },
       { property: "og:description", content: "Monthly plans for solo professionals up to multi-location teams." },
@@ -29,6 +29,7 @@ function limitLabel(value: number | null, noun: string) {
 }
 
 function PricingPage() {
+  const money = useDisplayCurrency();
   const { data: plans, isLoading } = useQuery({
     queryKey: ["public-plans"],
     queryFn: async () => {
@@ -48,9 +49,10 @@ function PricingPage() {
         <h1 className="font-display text-3xl font-bold sm:text-4xl">Pricing</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Every plan includes your booking page, calendar, customer records and email reminders.
-          All plans start with a 14-day free trial.
+          All plans start with a 7-day free trial.
         </p>
 
+        <div className="mt-6"><CurrencySelect value={money.currency} onChange={money.setCurrency} /></div>
         {isLoading ? (
           <p className="mt-10 text-sm text-muted-foreground">Loading plans…</p>
         ) : (
@@ -60,7 +62,7 @@ function PricingPage() {
                 <h2 className="font-display text-xl font-semibold">{plan.name}</h2>
                 <p className="mt-1 min-h-10 text-sm text-muted-foreground">{plan.description}</p>
                 <p className="mt-4 font-display text-3xl font-bold">
-                  {Number(plan.price_monthly) === 0 ? "Free" : formatCurrency(plan.price_monthly, plan.currency)}
+                  {Number(plan.price_monthly) === 0 ? "Free" : money.format(plan.price_monthly, plan.currency)}
                   {Number(plan.price_monthly) > 0 ? (
                     <span className="text-sm font-medium text-muted-foreground"> /month</span>
                   ) : null}

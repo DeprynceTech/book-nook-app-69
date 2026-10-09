@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
-import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -9,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness, useSubscription } from "@/hooks/useBusiness";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { CurrencySelect, useDisplayCurrency } from "@/lib/currency";
+import { whatsappLink } from "@/lib/contact";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/billing")({
 function BillingPage() {
   const { data: business } = useBusiness();
   const { data: subscription } = useSubscription(business?.id);
-  const queryClient = useQueryClient();
+  const money = useDisplayCurrency();
 
   const plans = useQuery({
     queryKey: ["plans"],
@@ -54,19 +55,6 @@ function BillingPage() {
     },
   });
 
-  const changePlan = useMutation({
-    mutationFn: async (planId: string) => {
-      if (!subscription) throw new Error("No subscription found");
-      const { error } = await supabase.from("subscriptions").update({ plan_id: planId }).eq("id", subscription.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Plan updated.");
-      void queryClient.invalidateQueries({ queryKey: ["subscription"] });
-    },
-    onError: () => toast.error("Could not change your plan."),
-  });
-
   return (
     <AppShell title="Billing" description="Your plan and payment history.">
       <div className="surface-panel p-4 sm:p-5">
@@ -86,7 +74,11 @@ function BillingPage() {
         ) : null}
       </div>
 
-      <h2 className="mt-8 font-display text-lg font-semibold">Available plans</h2>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-lg font-semibold">Available plans</h2>
+        <CurrencySelect value={money.currency} onChange={money.setCurrency} />
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">Pay for a plan by WhatsApp and we unlock your account as soon as payment is received.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {plans.data?.map((plan) => {
           const current = subscription?.plan_id === plan.id;
@@ -95,7 +87,7 @@ function BillingPage() {
               <p className="font-display text-lg font-semibold">{plan.name}</p>
               <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
               <p className="mt-3 font-display text-xl font-semibold">
-                {Number(plan.price_monthly) === 0 ? "Free" : formatCurrency(plan.price_monthly, plan.currency)}
+                {Number(plan.price_monthly) === 0 ? "Free" : money.format(plan.price_monthly, plan.currency)}
               </p>
               <ul className="mt-3 flex-1 space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex gap-1.5">
@@ -111,14 +103,19 @@ function BillingPage() {
                   {plan.sms_enabled ? "SMS reminders" : "Email reminders"}
                 </li>
               </ul>
-              <Button
-                className="mt-4"
-                variant={current ? "outline" : "default"}
-                disabled={current || changePlan.isPending}
-                onClick={() => changePlan.mutate(plan.id)}
-              >
-                {current ? "Current plan" : "Switch to this plan"}
-              </Button>
+              {current && subscription?.status === "active" ? (
+                <Button className="mt-4" variant="outline" disabled>Current plan</Button>
+              ) : Number(plan.price_monthly) === 0 ? null : (
+                <Button asChild className="mt-4">
+                  <a
+                    href={whatsappLink(`Hi, I'd like to pay for the ${plan.name} plan (${money.format(plan.price_monthly, plan.currency)}/month) for ${business?.name ?? "my business"}.`)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Pay for this plan
+                  </a>
+                </Button>
+              )}
             </div>
           );
         })}
