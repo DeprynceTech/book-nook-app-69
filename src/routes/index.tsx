@@ -54,7 +54,7 @@ function Landing() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <Link to="/signup">
-                  Start 14-day free trial
+                  Start 7-day free trial
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">

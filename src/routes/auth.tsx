@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in or create your BookFlow account" },
       {
         name: "description",
-        content: "Log in to your BookFlow workspace or start a 14-day free trial for your service business.",
+        content: "Log in to your BookFlow workspace or start a 7-day free trial for your service business.",
       },
       { property: "og:title", content: "BookFlow account access" },
       { property: "og:description", content: "Sign in or create a BookFlow workspace." },
@@ -101,7 +101,7 @@ function AuthPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "register"
-              ? "Start your 14-day free trial. No card required."
+              ? "Start your 7-day free trial. No card required."
               : mode === "forgot"
                 ? "Enter your email and we'll send you a reset link."
                 : "Sign in to manage your bookings."}

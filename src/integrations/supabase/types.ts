@@ -1031,6 +1031,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      business_has_access: { Args: { _business_id: string }; Returns: boolean }
       can_manage_business: { Args: { _business_id: string }; Returns: boolean }
       has_role: {
         Args: {
