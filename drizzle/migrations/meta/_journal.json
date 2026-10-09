@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791583817453,
+      "tag": "0000_trial_lock_admin_unlock",
+      "breakpoints": true
+    }
+  ]
+}
