@@ -50,6 +50,45 @@ function Businesses() {
     onError: () => toast.error("Could not update that business."),
   });
 
+  const unlock = useMutation({
+    mutationFn: async ({ businessId, planId, subId }: { businessId: string; planId: string; subId?: string }) => {
+      const plan = data?.plans.find((p) => p.id === planId);
+      if (!plan) throw new Error("Pick a plan");
+      const start = new Date();
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + 1);
+      const values = {
+        plan_id: planId,
+        status: "active" as const,
+        current_period_start: start.toISOString(),
+        current_period_end: end.toISOString(),
+        cancel_at_period_end: false,
+      };
+      const res = subId
+        ? await supabase.from("subscriptions").update(values).eq("id", subId).select("id").single()
+        : await supabase.from("subscriptions").insert({ ...values, business_id: businessId }).select("id").single();
+      if (res.error) throw res.error;
+      const pay = await supabase.from("payments").insert({
+        business_id: businessId,
+        subscription_id: res.data.id,
+        amount: plan.price_monthly,
+        currency: plan.currency,
+        provider: "manual",
+        method: "Recorded by admin",
+        status: "successful",
+        paid_at: start.toISOString(),
+      });
+      if (pay.error) throw pay.error;
+    },
+    onSuccess: () => {
+      toast.success("Account unlocked for 1 month.");
+      void queryClient.invalidateQueries({ queryKey: ["admin-data"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not unlock."),
+  });
+  const [planPick, setPlanPick] = useState<Record<string, string>>({});
+  const paidPlans = (data?.plans ?? []).filter((p) => Number(p.price_monthly) > 0);
+
   const rows = (data?.rows ?? []).filter(
     (r) => (filter === "all" || r.state === filter) && r.name.toLowerCase().includes(q.toLowerCase()),
   );
@@ -101,6 +140,25 @@ function Businesses() {
                 </td>
                 <td className="p-3 text-right font-medium">{formatCurrency(r.paid, data?.currency)}</td>
                 <td className="p-3 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <select
+                      aria-label="Plan to unlock"
+                      className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+                      value={planPick[r.id] ?? (r.plan && Number(r.plan.price_monthly) > 0 ? r.plan.id : paidPlans[0]?.id) ?? ""}
+                      onChange={(e) => setPlanPick({ ...planPick, [r.id]: e.target.value })}
+                    >
+                      {paidPlans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <Button
+                      size="sm"
+                      disabled={unlock.isPending}
+                      onClick={() => {
+                        const planId = planPick[r.id] ?? (r.plan && Number(r.plan.price_monthly) > 0 ? r.plan.id : paidPlans[0]?.id);
+                        if (planId) unlock.mutate({ businessId: r.id, planId, subId: r.sub?.id });
+                      }}
+                    >
+                      Mark paid &amp; unlock
+                    </Button>
                   <Button
                     size="sm"
                     variant={r.is_suspended ? "outline" : "ghost"}
@@ -108,6 +166,7 @@ function Businesses() {
                   >
                     {r.is_suspended ? "Reinstate" : "Suspend"}
                   </Button>
+                  </div>
                 </td>
               </tr>
             ))}
