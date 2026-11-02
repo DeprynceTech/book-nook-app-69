@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { BrandMark } from "@/components/BrandMark";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Lock } from "lucide-react";
+import { whatsappLink } from "@/lib/contact";
 import {
   CalendarDays,
   ChartLine,
@@ -124,6 +126,17 @@ export function AppShell({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: isAdmin } = useIsSuperAdmin();
+  const { data: business } = useBusiness();
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
+  const access = useQuery({
+    queryKey: ["business-access", business?.id],
+    enabled: Boolean(business?.id),
+    queryFn: async () => {
+      const { data } = await supabase.rpc("business_has_access", { _business_id: business!.id });
+      return Boolean(data);
+    },
+  });
+  const locked = access.data === false && pathname !== "/billing" && pathname !== "/support";
 
   useEffect(() => {
     if (isAdmin) void navigate({ to: "/admin", replace: true });
@@ -173,7 +186,27 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+        <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
+          {locked ? (
+            <div className="surface-panel mx-auto max-w-lg p-6 text-center">
+              <Lock className="mx-auto size-8 text-primary" />
+              <h2 className="mt-3 font-display text-xl font-semibold">Your account is locked</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Your 7-day free trial has ended. Choose a plan and pay, and we'll unlock your account straight away.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <Button asChild><Link to="/billing">See plans</Link></Button>
+                <Button asChild variant="outline">
+                  <a href={whatsappLink(`Hi, I'd like to unlock ${business?.name ?? "my business"} on BookFlow.`)} target="_blank" rel="noreferrer">
+                    WhatsApp us
+                  </a>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   );

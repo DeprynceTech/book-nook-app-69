@@ -127,7 +127,7 @@ function OnboardingPage() {
 
       if (plan) {
         const trialEnd = new Date();
-        trialEnd.setDate(trialEnd.getDate() + 14);
+        trialEnd.setDate(trialEnd.getDate() + 7);
         await supabase.from("subscriptions").insert({
           business_id: business.id,
           plan_id: plan.id,

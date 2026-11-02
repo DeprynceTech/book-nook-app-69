@@ -1,5 +1,8 @@
 # BookFlow roadmap
 
+- [ ] Audit and implement industry-aware configuration, service questions, staff terminology, booking workflows, dashboard widgets, and admin/plan controls
+- [ ] Verify salon, barbershop, photography, clinic, and consulting experiences and tenant/feature permissions
+
 - [x] Multi-tenant schema, RLS, demo data
 - [x] Marketing pages (home, features, industries, pricing, contact, privacy, terms)
 - [x] Auth, public booking page, business dashboard pages, platform admin

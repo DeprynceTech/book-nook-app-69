@@ -66,7 +66,7 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/auth" search={{ mode: "register" }} className="hover:text-foreground">
+              <Link to="/signup" className="hover:text-foreground">
                 Create an account
               </Link>
             </li>

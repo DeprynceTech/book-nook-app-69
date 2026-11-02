@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # The Lovable Vite config falls back to Nitro's Cloudflare preset; target Netlify explicitly.
+  NITRO_PRESET = "netlify"

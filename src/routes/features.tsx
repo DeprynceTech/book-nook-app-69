@@ -90,7 +90,7 @@ function FeaturesPage() {
           ))}
         </div>
         <Button asChild size="lg" className="mt-10">
-          <Link to="/auth" search={{ mode: "register" }}>
+          <Link to="/signup">
             Start free trial
           </Link>
         </Button>

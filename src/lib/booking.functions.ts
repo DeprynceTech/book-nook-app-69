@@ -44,6 +44,8 @@ async function loadContext(slug: string, serviceId: string, staffId?: string | n
   if (!business || !business.is_published || business.is_suspended) {
     throw new Error("This booking page is not available.");
   }
+  const { data: hasAccess } = await supabaseAdmin.rpc("business_has_access", { _business_id: business.id });
+  if (!hasAccess) throw new Error("This booking page is not available.");
 
   const { data: service } = await supabaseAdmin
     .from("services")
@@ -277,6 +279,8 @@ export const getBookingPage = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!business || !business.is_published || business.is_suspended) return null;
+    const { data: hasAccess } = await supabaseAdmin.rpc("business_has_access", { _business_id: business.id });
+    if (!hasAccess) return null;
 
     const [servicesRes, staffRes, staffServicesRes, locationsRes] = await Promise.all([
       supabaseAdmin

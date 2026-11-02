@@ -55,7 +55,7 @@ function IndustriesPage() {
           ))}
         </div>
         <Button asChild size="lg" className="mt-10">
-          <Link to="/auth" search={{ mode: "register" }}>
+          <Link to="/signup">
             Set up my business
           </Link>
         </Button>

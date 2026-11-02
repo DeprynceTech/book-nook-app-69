@@ -50,9 +50,82 @@ class LoggingProvider implements NotificationProvider {
   }
 }
 
+/**
+ * Klaviyo via the connector gateway. Each message is recorded as a Klaviyo
+ * event (metric e.g. "BookFlow Email booking_confirmation"); a Klaviyo flow
+ * triggered by that metric performs the actual email/SMS delivery using the
+ * event properties (subject, body, business, ...).
+ */
+const METRIC_LABEL: Record<Channel, string> = { email: "Email", sms: "SMS", whatsapp: "WhatsApp" };
+
+class KlaviyoProvider implements NotificationProvider {
+  name = "klaviyo";
+  private fallback: LoggingProvider;
+  constructor(public channel: Channel) {
+    this.fallback = new LoggingProvider(`internal-${channel}`, channel);
+  }
+
+  async send(message: NotificationMessage): Promise<SendResult> {
+    const lovableKey = process.env["LOVABLE_API_KEY"];
+    const klaviyoKey = process.env["KLAVIYO_API_KEY"];
+    if (!lovableKey || !klaviyoKey) return this.fallback.send(message);
+
+    const profile: Record<string, string> = {};
+    if (message.channel === "email") {
+      profile["email"] = message.recipient.trim();
+    } else {
+      const phone = message.recipient.replace(/[^\d+]/g, "");
+      if (!phone.startsWith("+")) {
+        return { provider: this.name, status: "failed", error: "Phone must include country code (+...)" };
+      }
+      profile["phone_number"] = phone;
+    }
+
+    const res = await fetch("https://connector-gateway.lovable.dev/klaviyo/events/", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": klaviyoKey,
+        revision: "2026-07-15",
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+      },
+      body: JSON.stringify({
+        data: {
+          type: "event",
+          attributes: {
+            properties: {
+              subject: message.subject ?? "",
+              body: message.body,
+              notification_type: message.type,
+              channel: message.channel,
+              business_id: message.businessId,
+              appointment_id: message.appointmentId ?? null,
+            },
+            metric: {
+              data: {
+                type: "metric",
+                attributes: { name: `BookFlow ${METRIC_LABEL[message.channel]} ${message.type}` },
+              },
+            },
+            profile: { data: { type: "profile", attributes: profile } },
+            unique_id: `${message.appointmentId ?? crypto.randomUUID()}-${message.type}-${message.channel}`,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`Klaviyo send failed [${res.status}]: ${text}`);
+      return { provider: this.name, status: "failed", error: `[${res.status}] ${text.slice(0, 300)}` };
+    }
+    return { provider: this.name, status: "sent" };
+  }
+}
+
 const registry = new Map<Channel, NotificationProvider>([
-  ["email", new LoggingProvider("internal-email", "email")],
-  ["sms", new LoggingProvider("internal-sms", "sms")],
+  ["email", new KlaviyoProvider("email")],
+  ["sms", new KlaviyoProvider("sms")],
   ["whatsapp", new LoggingProvider("internal-whatsapp", "whatsapp")],
 ]);
 

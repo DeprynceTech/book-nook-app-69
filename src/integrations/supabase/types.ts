@@ -10,12 +10,13 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
       appointments: {
         Row: {
+          booking_answers: Json
           business_id: string
           created_at: string
           customer_id: string | null
@@ -33,6 +34,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          booking_answers?: Json
           business_id: string
           created_at?: string
           customer_id?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          booking_answers?: Json
           business_id?: string
           created_at?: string
           customer_id?: string | null
@@ -197,6 +200,8 @@ export type Database = {
           description: string | null
           email: string | null
           id: string
+          industry_key: string | null
+          industry_overrides: Json
           is_published: boolean
           is_suspended: boolean
           logo_url: string | null
@@ -224,6 +229,8 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          industry_key?: string | null
+          industry_overrides?: Json
           is_published?: boolean
           is_suspended?: boolean
           logo_url?: string | null
@@ -251,6 +258,8 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          industry_key?: string | null
+          industry_overrides?: Json
           is_published?: boolean
           is_suspended?: boolean
           logo_url?: string | null
@@ -265,7 +274,15 @@ export type Database = {
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "businesses_industry_key_fkey"
+            columns: ["industry_key"]
+            isOneToOne: false
+            referencedRelation: "industry_templates"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -345,6 +362,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      industry_templates: {
+        Row: {
+          config: Json
+          key: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          key: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          key?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       locations: {
         Row: {
@@ -577,6 +615,7 @@ export type Database = {
           buffer_minutes: number
           business_id: string
           category: string | null
+          configuration: Json
           created_at: string
           description: string | null
           duration_minutes: number
@@ -592,6 +631,7 @@ export type Database = {
           buffer_minutes?: number
           business_id: string
           category?: string | null
+          configuration?: Json
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -607,6 +647,7 @@ export type Database = {
           buffer_minutes?: number
           business_id?: string
           category?: string | null
+          configuration?: Json
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -748,6 +789,7 @@ export type Database = {
           custom_branding: boolean
           description: string | null
           id: string
+          industry_features: Json
           is_active: boolean
           max_appointments: number | null
           max_customers: number | null
@@ -768,6 +810,7 @@ export type Database = {
           custom_branding?: boolean
           description?: string | null
           id?: string
+          industry_features?: Json
           is_active?: boolean
           max_appointments?: number | null
           max_customers?: number | null
@@ -788,6 +831,7 @@ export type Database = {
           custom_branding?: boolean
           description?: string | null
           id?: string
+          industry_features?: Json
           is_active?: boolean
           max_appointments?: number | null
           max_customers?: number | null
@@ -1031,6 +1075,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      business_has_access: { Args: { _business_id: string }; Returns: boolean }
+      business_industry_feature: {
+        Args: { _business_id: string; _feature: string }
+        Returns: boolean
+      }
       can_manage_business: { Args: { _business_id: string }; Returns: boolean }
       has_role: {
         Args: {
